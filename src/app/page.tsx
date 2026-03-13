@@ -1,66 +1,98 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import BackToTop from '@/components/BackToTop';
+import HeroSlider from '@/components/HeroSlider';
+import CategoryBar from '@/components/CategoryBar';
+import ArticleCard from '@/components/ArticleCard';
+import prisma from '@/lib/prisma';
+import Link from 'next/link';
 
-export default function Home() {
+export default async function HomePage() {
+  const [categories, postsData, totalPosts] = await Promise.all([
+    prisma.category.findMany({ orderBy: { order: 'asc' } }),
+    prisma.category.findMany({
+      orderBy: { order: 'asc' },
+      include: {
+        posts: {
+          where: { published: true },
+          orderBy: { createdAt: 'desc' },
+          take: 4,
+          include: {
+            category: true,
+            author: { select: { name: true } },
+          },
+        },
+      },
+    }),
+    prisma.post.count({ where: { published: true } }),
+  ]);
+
+  const categoriesWithPosts = postsData.filter((cat) => cat.posts.length > 0);
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <>
+      <Header />
+      <HeroSlider totalPosts={totalPosts} totalCategories={categories.length} />
+      <CategoryBar categories={categories} />
+
+      {/* Latest Posts Section */}
+      <div className="container">
+        <section className="section">
+          <div className="section-header">
+            <h2 className="section-title">Bài Viết Mới Nhất</h2>
+            <Link href="/bai-viet" className="section-link">
+              Xem tất cả →
+            </Link>
+          </div>
+          <div className="article-grid">
+            {(await prisma.post.findMany({
+              where: { published: true },
+              orderBy: { createdAt: 'desc' },
+              take: 4,
+              include: { category: true, author: { select: { name: true } } },
+            })).map((post) => (
+              <ArticleCard
+                key={post.id}
+                post={{
+                  ...post,
+                  createdAt: post.createdAt.toISOString(),
+                }}
+              />
+            ))}
+          </div>
+        </section>
+      </div>
+
+      {/* Category Sections */}
+      {categoriesWithPosts.map((cat) => (
+        <div className="container" key={cat.id}>
+          <section className="section" style={{ paddingTop: 0 }}>
+            <div className="section-header">
+              <h2 className="section-title">
+                <span className="section-title-icon">{cat.icon}</span>
+                {cat.name}
+              </h2>
+              <Link href={`/danh-muc/${cat.slug}`} className="section-link">
+                Xem tất cả →
+              </Link>
+            </div>
+            <div className="article-grid">
+              {cat.posts.map((post) => (
+                <ArticleCard
+                  key={post.id}
+                  post={{
+                    ...post,
+                    createdAt: post.createdAt.toISOString(),
+                  }}
+                />
+              ))}
+            </div>
+          </section>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      ))}
+
+      <Footer />
+      <BackToTop />
+    </>
   );
 }
