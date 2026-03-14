@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+import { put } from '@vercel/blob';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,20 +17,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
     const timestamp = Date.now();
-    const ext = path.extname(file.name);
-    const filename = `${timestamp}${ext}`;
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+    const ext = file.name.split('.').pop();
+    const filename = `uploads/${timestamp}.${ext}`;
 
-    await mkdir(uploadDir, { recursive: true });
-    const filePath = path.join(uploadDir, filename);
-    await writeFile(filePath, buffer);
+    const blob = await put(filename, file, {
+      access: 'public',
+    });
 
-    const url = `/uploads/${filename}`;
-    return NextResponse.json({ url, filename });
+    return NextResponse.json({ url: blob.url, filename });
   } catch (error) {
     console.error('Error uploading file:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
