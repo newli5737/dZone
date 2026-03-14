@@ -25,7 +25,7 @@ export default function ArticleCard({ post }: { post: Post }) {
     <Link href={`/bai-viet/${post.slug}`} className="article-card">
       <div className="article-card-image">
         {post.thumbnail ? (
-          <img src={post.thumbnail} alt={post.title} />
+          <img src={post.thumbnail} alt={post.title} loading="lazy" />
         ) : (
           <div className="article-card-placeholder">
             {post.category?.icon || <FiFileText size={32} />}

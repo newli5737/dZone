@@ -138,6 +138,7 @@ export default async function ArticlesPage({
                       src={post.thumbnail}
                       alt={post.title}
                       className="recent-post-thumb"
+                      loading="lazy"
                     />
                   ) : (
                     <div

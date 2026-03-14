@@ -67,7 +67,7 @@ export default async function ArticleDetailPage({
       {/* Article Hero */}
       <div className="article-hero">
         {post.thumbnail ? (
-          <img src={post.thumbnail} alt={post.title} className="article-hero-bg" />
+          <img src={post.thumbnail} alt={post.title} className="article-hero-bg" loading="lazy" />
         ) : (
           <div
             className="article-hero-bg"
@@ -115,6 +115,7 @@ export default async function ArticleDetailPage({
                       src={rp.thumbnail}
                       alt={rp.title}
                       className="recent-post-thumb"
+                      loading="lazy"
                     />
                   ) : (
                     <div
@@ -154,7 +155,7 @@ export default async function ArticleDetailPage({
                 <Link key={rp.id} href={`/bai-viet/${rp.slug}`} className="article-card">
                   <div className="article-card-image">
                     {rp.thumbnail ? (
-                      <img src={rp.thumbnail} alt={rp.title} />
+                      <img src={rp.thumbnail} alt={rp.title} loading="lazy" />
                     ) : (
                       <div className="article-card-placeholder">
                         {rp.category?.icon || '📝'}
