@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { put } from '@vercel/blob';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -27,7 +30,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: blob.url, filename });
   } catch (error) {
-    console.error('Error uploading file:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Upload error:', message, error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
