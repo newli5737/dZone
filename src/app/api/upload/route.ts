@@ -20,18 +20,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
 
+    // Check if BLOB token exists
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      return NextResponse.json({ error: 'Blob storage not configured' }, { status: 500 });
+    }
+
     const timestamp = Date.now();
     const ext = file.name.split('.').pop();
     const filename = `uploads/${timestamp}.${ext}`;
 
-    const blob = await put(filename, file, {
+    // Convert File to Buffer
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    const blob = await put(filename, buffer, {
       access: 'public',
+      token: process.env.BLOB_READ_WRITE_TOKEN,
     });
 
     return NextResponse.json({ url: blob.url, filename });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Upload error:', message, error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Upload error detail:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
